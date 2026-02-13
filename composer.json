@@ -1,0 +1,65 @@
+{
+    "name": "freyr/message-broker-amqp",
+    "description": "AMQP transport plugin for Freyr Message Broker — RabbitMQ publishing, routing, and topology management",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "messenger",
+        "amqp",
+        "rabbitmq",
+        "outbox-pattern"
+    ],
+    "authors": [
+        {
+            "name": "Freyr Development Team"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-amqp": "*",
+        "freyr/message-broker-contracts": "@dev",
+        "symfony/amqp-messenger": "^6.4|^7.0",
+        "symfony/config": "^6.4|^7.0",
+        "symfony/console": "^6.4|^7.0",
+        "symfony/dependency-injection": "^6.4|^7.0",
+        "symfony/http-kernel": "^6.4|^7.0",
+        "symfony/messenger": "^6.4|^7.0"
+    },
+    "require-dev": {
+        "freyr/identity": "^0.4",
+        "nesbot/carbon": "^2.0|^3.0",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0|^12.0",
+        "symplify/easy-coding-standard": "^13.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../message-broker-contracts"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Freyr\\MessageBroker\\Amqp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Freyr\\MessageBroker\\Amqp\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "optimize-autoloader": true
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse --memory-limit=-1",
+        "ecs": "ecs check",
+        "ecs:fix": "ecs check --fix",
+        "test": "phpunit"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

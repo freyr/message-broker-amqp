@@ -1,0 +1,39 @@
+services:
+    _defaults:
+        autowire: false
+        autoconfigure: false
+        public: false
+
+    Freyr\MessageBroker\Amqp\Routing\AmqpRoutingStrategyInterface:
+        class: Freyr\MessageBroker\Amqp\Routing\DefaultAmqpRoutingStrategy
+        arguments:
+            $defaultSenderName: 'amqp'
+            $routingOverrides: '%message_broker_amqp.routing_overrides%'
+
+    Freyr\MessageBroker\Amqp\AmqpOutboxPublisher:
+        arguments:
+            $senderLocator: !service_locator
+                amqp: '@messenger.transport.amqp'
+            $routingStrategy: '@Freyr\MessageBroker\Amqp\Routing\AmqpRoutingStrategyInterface'
+            $logger: '@logger'
+        tags:
+            - { name: 'message_broker.outbox_publisher', transport: 'outbox' }
+
+    Freyr\MessageBroker\Amqp\TopologyManager:
+        arguments:
+            $topology: '%message_broker_amqp.topology%'
+            $logger: '@logger'
+
+    Freyr\MessageBroker\Amqp\DefinitionsFormatter:
+        arguments:
+            $topology: '%message_broker_amqp.topology%'
+
+    Freyr\MessageBroker\Amqp\AmqpConnectionFactory: ~
+
+    Freyr\MessageBroker\Amqp\Command\SetupAmqpTopologyCommand:
+        arguments:
+            $topologyManager: '@Freyr\MessageBroker\Amqp\TopologyManager'
+            $definitionsFormatter: '@Freyr\MessageBroker\Amqp\DefinitionsFormatter'
+            $connectionFactory: '@Freyr\MessageBroker\Amqp\AmqpConnectionFactory'
+            $defaultDsn: '%env(default::MESSENGER_AMQP_DSN)%'
+        tags: ['console.command']
