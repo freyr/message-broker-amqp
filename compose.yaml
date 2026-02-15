@@ -1,0 +1,10 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ../message-broker-contracts:/app/../message-broker-contracts
+      - ${COMPOSER_HOME}:/.composer:consistent

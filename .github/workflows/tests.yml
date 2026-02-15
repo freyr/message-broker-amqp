@@ -1,0 +1,97 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  ecs:
+    name: ECS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: amqp
+          coverage: none
+          tools: composer:v2
+      - run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/ecs check
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: amqp
+          coverage: none
+          tools: composer:v2
+      - run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/phpstan analyse --memory-limit=-1
+
+  tests:
+    name: PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }} - ${{ matrix.stability }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+        symfony: ['6.4.*', '7.*']
+        stability: ['prefer-stable']
+        include:
+          - php: '8.2'
+            symfony: '6.4.*'
+            stability: 'prefer-lowest'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: amqp
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-symfony-${{ matrix.symfony }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Lock Symfony version
+        run: |
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-interaction symfony/flex
+          composer config extra.symfony.require "${{ matrix.symfony }}"
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: Run tests
+        run: vendor/bin/phpunit --testdox
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- PHP Version: ${{ matrix.php }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Symfony Version: ${{ matrix.symfony }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stability: ${{ matrix.stability }}" >> $GITHUB_STEP_SUMMARY
