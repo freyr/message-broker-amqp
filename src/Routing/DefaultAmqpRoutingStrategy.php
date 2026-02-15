@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Freyr\MessageBroker\Amqp\Routing;
 
 /**
- * Convention-based AMQP routing from #[MessageName].
+ * Convention-based AMQP routing from message names.
  *
  * Default behaviour:
  * - Sender: configurable default (e.g. 'amqp')
  * - Routing key: full message name (e.g. 'order.placed')
  * - Headers: x-message-name header
  *
- * Override via YAML config or #[AmqpExchange]/#[AmqpRoutingKey] attributes.
- * YAML overrides take precedence over attributes.
+ * Override via YAML config (message_broker_amqp.routing).
  */
 final readonly class DefaultAmqpRoutingStrategy implements AmqpRoutingStrategyInterface
 {
@@ -27,35 +26,19 @@ final readonly class DefaultAmqpRoutingStrategy implements AmqpRoutingStrategyIn
 
     public function getSenderName(object $event, string $messageName): string
     {
-        // 1. YAML override
         if (isset($this->routingOverrides[$messageName]['sender'])) {
             return $this->routingOverrides[$messageName]['sender'];
         }
 
-        // 2. Attribute override (optional)
-        $attributeSender = AmqpExchange::fromClass($event);
-        if ($attributeSender !== null) {
-            return $attributeSender;
-        }
-
-        // 3. Default sender
         return $this->defaultSenderName;
     }
 
     public function getRoutingKey(object $event, string $messageName): string
     {
-        // 1. YAML override
         if (isset($this->routingOverrides[$messageName]['routing_key'])) {
             return $this->routingOverrides[$messageName]['routing_key'];
         }
 
-        // 2. Attribute override (optional)
-        $attributeKey = AmqpRoutingKey::fromClass($event);
-        if ($attributeKey !== null) {
-            return $attributeKey;
-        }
-
-        // 3. Convention: full message name as routing key
         return $messageName;
     }
 

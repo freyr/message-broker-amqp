@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Freyr\Identity\Id;
 use Freyr\MessageBroker\Amqp\AmqpOutboxPublisher;
 use Freyr\MessageBroker\Amqp\Routing\DefaultAmqpRoutingStrategy;
-use Freyr\MessageBroker\Amqp\Tests\Unit\Fixtures\CommerceTestMessage;
 use Freyr\MessageBroker\Amqp\Tests\Unit\Fixtures\TestMessage;
 use Freyr\MessageBroker\Amqp\Tests\Unit\Transport\InMemoryTransport;
 use Freyr\MessageBroker\Contracts\MessageIdStamp;
@@ -85,14 +84,21 @@ final class AmqpOutboxPublisherTest extends TestCase
         $this->assertSame('custom.override.key', $amqpStamp->getRoutingKey());
     }
 
-    public function testAttributeOverrideRouting(): void
+    public function testYamlOverrideSenderRouting(): void
     {
         $commerceSender = new InMemoryTransport();
-        $publisher = $this->createPublisher(additionalSenders: [
-            'commerce' => $commerceSender,
-        ]);
+        $publisher = $this->createPublisher(
+            routingOverrides: [
+                'commerce.order.placed' => [
+                    'sender' => 'commerce',
+                ],
+            ],
+            additionalSenders: [
+                'commerce' => $commerceSender,
+            ],
+        );
 
-        $message = new CommerceTestMessage(orderId: Id::new(), amount: 99.99, placedAt: CarbonImmutable::now());
+        $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
         $envelope = new Envelope($message, [
             new MessageIdStamp(Id::fromString('01234567-89ab-7def-8000-000000000001')),
             new MessageNameStamp('commerce.order.placed'),
@@ -112,9 +118,13 @@ final class AmqpOutboxPublisherTest extends TestCase
 
     public function testThrowsWhenSenderNotInLocator(): void
     {
-        $publisher = $this->createPublisher();
+        $publisher = $this->createPublisher(routingOverrides: [
+            'commerce.order.placed' => [
+                'sender' => 'commerce',
+            ],
+        ]);
 
-        $message = new CommerceTestMessage(orderId: Id::new(), amount: 50.00, placedAt: CarbonImmutable::now());
+        $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
         $envelope = new Envelope($message, [
             new MessageIdStamp(Id::fromString('01234567-89ab-7def-8000-000000000001')),
             new MessageNameStamp('commerce.order.placed'),

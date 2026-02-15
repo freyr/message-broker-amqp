@@ -7,7 +7,6 @@ namespace Freyr\MessageBroker\Amqp\Tests\Unit\Routing;
 use Carbon\CarbonImmutable;
 use Freyr\Identity\Id;
 use Freyr\MessageBroker\Amqp\Routing\DefaultAmqpRoutingStrategy;
-use Freyr\MessageBroker\Amqp\Tests\Unit\Fixtures\CommerceTestMessage;
 use Freyr\MessageBroker\Amqp\Tests\Unit\Fixtures\TestMessage;
 use PHPUnit\Framework\TestCase;
 
@@ -16,20 +15,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class DefaultAmqpRoutingStrategyTest extends TestCase
 {
-    public function testDefaultSenderNameWhenNoAmqpExchangeAttribute(): void
+    public function testDefaultSenderName(): void
     {
         $strategy = new DefaultAmqpRoutingStrategy();
         $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
 
         $this->assertSame('amqp', $strategy->getSenderName($message, 'test.message.sent'));
-    }
-
-    public function testCustomSenderNameFromAmqpExchangeAttribute(): void
-    {
-        $strategy = new DefaultAmqpRoutingStrategy();
-        $message = new CommerceTestMessage(orderId: Id::new(), amount: 99.99, placedAt: CarbonImmutable::now());
-
-        $this->assertSame('commerce', $strategy->getSenderName($message, 'commerce.order.placed'));
     }
 
     public function testCustomDefaultSenderNameViaConstructor(): void
@@ -38,14 +29,6 @@ final class DefaultAmqpRoutingStrategyTest extends TestCase
         $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
 
         $this->assertSame('events', $strategy->getSenderName($message, 'test.message.sent'));
-    }
-
-    public function testAmqpExchangeAttributeOverridesCustomDefault(): void
-    {
-        $strategy = new DefaultAmqpRoutingStrategy(defaultSenderName: 'events');
-        $message = new CommerceTestMessage(orderId: Id::new(), amount: 50.00, placedAt: CarbonImmutable::now());
-
-        $this->assertSame('commerce', $strategy->getSenderName($message, 'commerce.order.placed'));
     }
 
     public function testRoutingKeyDefaultsToMessageName(): void
@@ -89,17 +72,5 @@ final class DefaultAmqpRoutingStrategyTest extends TestCase
         $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
 
         $this->assertSame('custom.routing.key', $strategy->getRoutingKey($message, 'order.placed'));
-    }
-
-    public function testYamlOverrideTakesPrecedenceOverAttribute(): void
-    {
-        $strategy = new DefaultAmqpRoutingStrategy(routingOverrides: [
-            'commerce.order.placed' => [
-                'sender' => 'override_sender',
-            ],
-        ]);
-        $message = new CommerceTestMessage(orderId: Id::new(), amount: 99.99, placedAt: CarbonImmutable::now());
-
-        $this->assertSame('override_sender', $strategy->getSenderName($message, 'commerce.order.placed'));
     }
 }
