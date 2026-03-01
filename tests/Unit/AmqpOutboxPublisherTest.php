@@ -35,10 +35,10 @@ final class AmqpOutboxPublisherTest extends TestCase
     {
         $publisher = $this->createPublisher();
 
-        $messageId = '01234567-89ab-7def-8000-000000000001';
+        $messageId = Id::new();
         $message = new TestMessage(id: Id::new(), name: 'Test', timestamp: CarbonImmutable::now());
         $envelope = new Envelope($message, [
-            new MessageIdStamp(Id::fromString($messageId)),
+            new MessageIdStamp($messageId),
             new MessageNameStamp('test.message.sent'),
         ]);
 
@@ -54,7 +54,7 @@ final class AmqpOutboxPublisherTest extends TestCase
         $this->assertSame('test.message.sent', $amqpStamp->getRoutingKey());
 
         $this->assertNotNull($sentEnvelope->last(MessageIdStamp::class));
-        $this->assertSame($messageId, (string) $sentEnvelope->last(MessageIdStamp::class)->messageId);
+        $this->assertTrue($messageId->sameAs($sentEnvelope->last(MessageIdStamp::class)->messageId));
         $this->assertNotNull($sentEnvelope->last(MessageNameStamp::class));
         $this->assertSame('test.message.sent', $sentEnvelope->last(MessageNameStamp::class)->messageName);
     }

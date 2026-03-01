@@ -18,7 +18,7 @@
     "require": {
         "php": ">=8.2",
         "ext-amqp": "*",
-        "freyr/message-broker-contracts": "^0.1",
+        "freyr/message-broker-contracts": "^0.3",
         "symfony/amqp-messenger": "^6.4|^7.0",
         "symfony/config": "^6.4|^7.0",
         "symfony/console": "^6.4|^7.0",
@@ -27,7 +27,7 @@
         "symfony/messenger": "^6.4|^7.0"
     },
     "require-dev": {
-        "freyr/identity": "^0.4",
+        "freyr/identity": "^1.0",
         "nesbot/carbon": "^2.0|^3.0",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.0|^12.0",
